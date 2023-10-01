@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Access TODOs</title>
+</head>
+<body>
+<div>
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+</div>
+<div>
+
+    <button onclick="logout()">Logout</button>
+    <input id="todoContent" placeholder="New TODO content">
+    <button onclick="addTodo()">Add TODO</button>
+
+</div>
+
+<div>
+    <h2>Your TODOs</h2>
+    <ul id="todos"></ul>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
+
