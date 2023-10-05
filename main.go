@@ -3,6 +3,7 @@ package main
 import (
 	"awesomeProject/funcs"
 	"database/sql"
+	"github.com/gin-contrib/cors" // 确保你已导入此包
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
@@ -19,6 +20,7 @@ func initDB() (db *sql.DB, err error) {
 	}
 	return db, err
 }
+
 func main() {
 	var db *sql.DB
 	//初始化数据库
@@ -32,15 +34,23 @@ func main() {
 	//调用gin框架
 	r := gin.Default()
 
+	// 配置CORS
+	r.Use(cors.Default())
+
 	// 设置静态文件目录
-	r.Static("/static", "./frontend/js") // 这里假设您的JavaScript文件在 /frontend/js
+	r.Static("/static", "./static") // 这里假设您的JavaScript文件在 /frontend/js
 
 	// 加载HTML文件
-	r.LoadHTMLFiles("./frontend/index.html") // 路径应根据您的实际情况进行调整
+	r.LoadHTMLFiles("./template/index.html") // 路径应根据您的实际情况进行调整
 
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(200, "index.html", nil)
 	})
+
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.File("./path_to_your_favicon/favicon.ico")
+	})
+
 	//路由实现
 	funcs.Register(r, db)
 	funcs.Login(r, db)

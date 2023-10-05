@@ -22,8 +22,8 @@ func Rooting(r *gin.Engine, db *sql.DB) {
 	change_TODO(r, db)
 	//获取
 	get_all_TODO(r, db)
-	//查询
-	query_for_TODO(r, db)
+	//真查询
+	search_for_TODO(r, db)
 }
 
 func query_for_TODO(r *gin.Engine, db *sql.DB) {
@@ -78,6 +78,11 @@ func get_all_TODO(r *gin.Engine, db *sql.DB) {
 	})
 }
 
+// 定义一个新的结构体只包含 done 字段
+type UpdateTODO struct {
+	Done bool `json:"done"`
+}
+
 func change_TODO(r *gin.Engine, db *sql.DB) {
 	// 修改TODO
 	r.PUT("/todo/:id", func(c *gin.Context) {
@@ -88,17 +93,28 @@ func change_TODO(r *gin.Engine, db *sql.DB) {
 			return
 		}
 
-		var todo TODO
-		if err := c.BindJSON(&todo); err != nil {
+		var update UpdateTODO
+		if err := c.BindJSON(&update); err != nil {
 			c.JSON(400, gin.H{"status": "BadRequest", "error": "Invalid JSON format"})
 			return
 		}
 
-		_, err = db.Exec("UPDATE todos SET content = ?, done = ? WHERE id = ?", todo.Content, todo.Done, id)
+		// 更新语句只设置 done 字段
+		result, err := db.Exec("UPDATE todos SET done = ? WHERE id = ?", update.Done, id)
 		if err != nil {
-			fmt.Println("Error:", err) // 输出具体错误到控制台
+			fmt.Println("Error:", err)
 			c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
 			return
+		}
+
+		count, err := result.RowsAffected()
+		if err != nil {
+			fmt.Println("Error getting rows affected:", err)
+			return
+		}
+		if count == 0 {
+			fmt.Println("Warning: No rows were updated.")
+			c.JSON(404, gin.H{"status": "NotFound", "error": "TODO not found"})
 		}
 
 		c.JSON(200, gin.H{"status": "OK"})
@@ -106,8 +122,7 @@ func change_TODO(r *gin.Engine, db *sql.DB) {
 }
 
 func delete_TODO(r *gin.Engine, db *sql.DB) {
-	//删除TODO
-
+	// 删除TODO
 	r.DELETE("/todo/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
 		id, err := strconv.Atoi(idStr)
@@ -144,5 +159,31 @@ func add_to_TODO(r *gin.Engine, db *sql.DB) {
 			return
 		}
 		c.JSON(200, gin.H{"status": "OK"})
+	})
+}
+
+func search_for_TODO(r *gin.Engine, db *sql.DB) {
+	r.GET("/todo/search/:query", func(c *gin.Context) {
+		query := c.Param("query")
+		rows, err := db.Query("SELECT * FROM todos WHERE content LIKE ?", "%"+query+"%")
+		if err != nil {
+			fmt.Println("Error:", err)
+			c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var todos []TODO
+		for rows.Next() {
+			var todo TODO
+			if err := rows.Scan(&todo.ID, &todo.Content, &todo.Done); err != nil {
+				fmt.Println("Error:", err)
+				c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
+				return
+			}
+			todos = append(todos, todo)
+		}
+
+		c.JSON(200, todos)
 	})
 }

@@ -15,12 +15,12 @@ function login() {
     })
         .then(response => response.json())
         .then(data => {
-            if (data.token) {
+            if (data.status === 'OK') {
                 localStorage.setItem('token', data.token);
                 alert('Login successful!');
                 fetchTodos();
             } else {
-                alert('Login failed! Please check your credentials.');
+                alert('Login failed! ' + data.error);
             }
         })
         .catch(error => {
@@ -59,13 +59,29 @@ function fetchTodos() {
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.checked = todo.done;
-                    checkbox.disabled = true; // 使其为只读，防止用户更改它
+
+                    // 在复选框状态更改的事件处理程序中
+                    checkbox.onchange = function() {
+                        toggleDone(todo.id, !checkbox.checked);  // 这里传递的是要变为的状态
+                    };
+
+
                     li.appendChild(checkbox);
+
+                    // 添加删除按钮
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = function() {
+                        deleteTodo(todo.id);
+                    };
+                    li.appendChild(deleteButton);
 
                     // 添加todo内容
                     const span = document.createElement('span');
                     span.textContent = todo.content;
                     li.appendChild(span);
+
+
 
                     todosList.appendChild(li);
                 });
@@ -132,9 +148,133 @@ function addTodo() {
                 alert('Failed to add TODO! ' + data.error);
             }
         })
+
         .catch(error => {
             console.error('Error:', error);
             alert('Failed to add TODO due to an error!');
         });
 }
+
+
+function deleteTodo(id) {
+    const token = localStorage.getItem('token');
+
+    fetch(`http://127.0.0.1:8080/todo/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `${token}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "OK") {
+                alert('TODO deleted successfully!');
+                fetchTodos();  // 更新列表
+            } else {
+                alert('Failed to delete TODO! ' + data.error);
+            }
+        })
+
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete TODO due to an error!');
+        });
+}
+
+
+
+
+async function searchTodos() {
+    const searchQuery = document.getElementById('searchQuery').value;
+    const response = await fetch(`/todo/search/${searchQuery}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': localStorage.getItem('token')
+        }
+    });
+    const data = await response.json();
+    if (Array.isArray(data)) {
+        renderTodos(data);
+    } else {
+        console.error('Expected an array of todos, but got:', data);
+    }
+}
+
+
+
+function renderTodos(todos) {
+    const list = document.getElementById('todos');
+    list.innerHTML = '';  // Clear the list before rendering.
+
+    todos.forEach(todo => {
+        const li = document.createElement('li');
+        const checkBox = document.createElement('input');
+        checkBox.type = 'checkbox';
+        checkBox.checked = todo.done;
+
+        checkBox.addEventListener('change', () => {
+            toggleDone(todo.id, !checkBox.checked);
+        });
+
+        li.appendChild(checkBox);
+        li.appendChild(document.createTextNode(todo.content));
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = function() {
+            deleteTodo(todo.id);
+        };
+        li.appendChild(deleteButton);
+
+        list.appendChild(li);
+    });
+}
+
+
+
+
+function createToggleDoneButton(id, done) {
+    console.log('createToggleDoneButton:', id, done);  // 添加此行来调试
+    const button = document.createElement('button');
+    button.innerText = '切换状态';
+    button.addEventListener('click', () => toggleDone(id, !done));
+    return button;
+}
+
+
+
+function toggleDone(id, currentStatus) {
+    const newStatus = !currentStatus;
+    fetch(`http://127.0.0.1:8080/todo/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ done: newStatus })
+    })
+        .then(response => {
+            if (!response.ok) {
+                return Promise.reject('Failed to toggle todo status');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('TODO updated successfully!');
+            fetchTodos();  // 重新获取并显示最新的TODO列表
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+
+// 当文档加载完成后执行getTodos函数
+document.addEventListener('DOMContentLoaded', fetchTodos);
+
+
+
+
+
+
 

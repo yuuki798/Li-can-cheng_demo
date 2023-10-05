@@ -1,31 +1,42 @@
 package funcs
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
+
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type RegisterResponse struct {
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
+}
 
 func Register(r *gin.Engine, db *sql.DB) {
 	r.POST("/register", func(c *gin.Context) {
-		var user User
+		var req RegisterRequest
 
 		// 从请求中解析用户数据
-		if err := c.BindJSON(&user); err != nil {
-			c.JSON(400, gin.H{"status": "BadRequest", "error": "Invalid JSON format"})
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(400, RegisterResponse{Status: "BadRequest", Error: "Invalid JSON format"})
 			return
 		}
 
-		// 密码加密（这只是一个简单的例子，请在实际中使用更安全的方法如bcrypt）
-		hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(user.Password)))
-
-		// 将用户信息存入数据库
-		_, err := db.Exec("INSERT INTO users(username, password) VALUES(?, ?)", user.Username, hashedPassword)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
+			c.JSON(500, RegisterResponse{Status: "InternalServerError", Error: "Could not hash password"})
 			return
 		}
-		c.JSON(200, gin.H{"status": "OK", "message": "Successfully registered!"})
+
+		_, err = db.Exec("INSERT INTO users(username, password) VALUES(?, ?)", req.Username, string(hashedPassword))
+		if err != nil {
+			c.JSON(500, RegisterResponse{Status: "InternalServerError", Error: err.Error()})
+			return
+		}
+		c.JSON(200, RegisterResponse{Status: "OK"})
 	})
 }

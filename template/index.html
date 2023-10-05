@@ -13,6 +13,8 @@
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
 </div>
+
+
 <div>
 
     <button onclick="logout()">Logout</button>
@@ -22,11 +24,27 @@
 </div>
 
 <div>
+    <input type="text" id="searchQuery" placeholder="Search for TODOs...">
+    <button onclick="searchTodos()">Search</button>
+</div>
+<div>
+    <button onclick="fetchTodos()">显示全部TODOs</button>
+</div>
+
+
+
+<div>
     <h2>Your TODOs</h2>
     <ul id="todos"></ul>
 </div>
 
-<script src="/static/app.js"></script>
+
+
+
+
+
+
+<script src="http://127.0.0.1:8080/static/app.js"></script>
 </body>
 </html>
 
