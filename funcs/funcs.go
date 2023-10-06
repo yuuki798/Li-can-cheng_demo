@@ -13,7 +13,7 @@ type TODO struct {
 	Done    bool   `json:"done"`
 }
 
-func Rooting(r *gin.Engine, db *sql.DB) {
+func Rooting(r *gin.RouterGroup, db *sql.DB) {
 	//添加
 	add_to_TODO(r, db)
 	//删除
@@ -26,33 +26,7 @@ func Rooting(r *gin.Engine, db *sql.DB) {
 	search_for_TODO(r, db)
 }
 
-func query_for_TODO(r *gin.Engine, db *sql.DB) {
-	// 查询单个TODO
-	r.GET("/todo/:id", func(c *gin.Context) {
-		idStr := c.Param("id")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			c.JSON(400, gin.H{"status": "BadRequest", "error": "Invalid ID"})
-			return
-		}
-
-		var todo TODO
-		err = db.QueryRow("SELECT * FROM todos WHERE id = ?", id).Scan(&todo.ID, &todo.Content, &todo.Done)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				c.JSON(404, gin.H{"status": "NotFound", "error": "TODO not found"})
-			} else {
-				fmt.Println("Error:", err) // 输出具体错误到控制台
-				c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
-			}
-			return
-		}
-
-		c.JSON(200, todo)
-	})
-}
-
-func get_all_TODO(r *gin.Engine, db *sql.DB) {
+func get_all_TODO(r *gin.RouterGroup, db *sql.DB) {
 	// 获取所有TODO
 	r.GET("/todo", func(c *gin.Context) {
 		rows, err := db.Query("SELECT * FROM todos")
@@ -83,7 +57,7 @@ type UpdateTODO struct {
 	Done bool `json:"done"`
 }
 
-func change_TODO(r *gin.Engine, db *sql.DB) {
+func change_TODO(r *gin.RouterGroup, db *sql.DB) {
 	// 修改TODO
 	r.PUT("/todo/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -121,7 +95,7 @@ func change_TODO(r *gin.Engine, db *sql.DB) {
 	})
 }
 
-func delete_TODO(r *gin.Engine, db *sql.DB) {
+func delete_TODO(r *gin.RouterGroup, db *sql.DB) {
 	// 删除TODO
 	r.DELETE("/todo/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -142,7 +116,7 @@ func delete_TODO(r *gin.Engine, db *sql.DB) {
 	})
 }
 
-func add_to_TODO(r *gin.Engine, db *sql.DB) {
+func add_to_TODO(r *gin.RouterGroup, db *sql.DB) {
 	//添加TODO
 	r.POST("/todo", func(c *gin.Context) {
 		var todo TODO
@@ -162,7 +136,7 @@ func add_to_TODO(r *gin.Engine, db *sql.DB) {
 	})
 }
 
-func search_for_TODO(r *gin.Engine, db *sql.DB) {
+func search_for_TODO(r *gin.RouterGroup, db *sql.DB) {
 	r.GET("/todo/search/:query", func(c *gin.Context) {
 		query := c.Param("query")
 		rows, err := db.Query("SELECT * FROM todos WHERE content LIKE ?", "%"+query+"%")

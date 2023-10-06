@@ -3,10 +3,11 @@ package main
 import (
 	"awesomeProject/funcs"
 	"database/sql"
-	"github.com/gin-contrib/cors" // 确保你已导入此包
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"net/http"
+	"path/filepath"
 )
 
 //var todos []TODO
@@ -14,7 +15,10 @@ import (
 func initDB() (db *sql.DB, err error) {
 
 	// username:password@tcp(host:port)/dbname
-	db, err = sql.Open("mysql", "root:1234@tcp(127.0.0.1:3306)/todoDB")
+	//db, err = sql.Open("mysql", "root:1234@tcp(127.0.0.1:3306)/todoDB")
+
+	db, err = sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/todoDB")
+
 	if err != nil {
 		log.Fatalf("Error opening database: %q", err)
 	}
@@ -31,33 +35,45 @@ func main() {
 
 	//进程结束后确保关闭
 	defer db.Close()
+
 	//调用gin框架
 	r := gin.Default()
 
-	// 配置CORS
-	r.Use(cors.Default())
+	// 配置CORS (如果需要的话)
+	//r.Use(cors.Default())
 
 	// 设置静态文件目录
-	r.Static("/static", "./static") // 这里假设您的JavaScript文件在 /frontend/js
+	r.Static("/static", "./static")
 
 	// 加载HTML文件
-	r.LoadHTMLFiles("./template/index.html") // 路径应根据您的实际情况进行调整
+	r.LoadHTMLGlob("./template/*") // 加载template文件夹下的所有HTML文件
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
+	htmlFiles, _ := filepath.Glob("./template/*.html")
+	for _, file := range htmlFiles {
+		route := "/" + filepath.Base(file)
+		r.GET(route, getRouteHandler(filepath.Base(file)))
+	}
 
-	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.File("./path_to_your_favicon/favicon.ico")
-	})
-
-	//路由实现
+	//不需要身份验证的路由
 	funcs.Register(r, db)
 	funcs.Login(r, db)
 
-	r.Use(funcs.AuthMiddleware())
-	funcs.Rooting(r, db)
+	//需要身份验证的路由分组
+	authorized := r.Group("/")
+	authorized.Use(funcs.AuthMiddleware())
+	{
+		// 在此分组中，注册需要身份验证的路由
+		funcs.Rooting(authorized, db)
+	}
+
 	//跑进程
 	r.Run(":8080")
-
+}
+func getRouteHandler(filename string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, filename, nil)
+	}
 }

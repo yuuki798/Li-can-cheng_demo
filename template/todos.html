@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TODOS</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .todo-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .todo-checkbox {
+            margin-right: 15px;
+            transform: scale(1.5);
+        }
+
+        .todo-content {
+            flex-grow: 1;
+            font-size: 1.5em; // 调整字体大小
+        }
+        button {
+            margin-right: 10px;
+        }
+        #undoButton {
+            background-color: #f44;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        #undoButton:hover {
+            background-color: #c33;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card" style="box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);">
+        <div class="card-header bg-primary text-white">
+            Manage TODOs
+        </div>
+        <div class="card-body">
+            <button onclick="logout()" class="btn btn-danger mb-3">Logout</button>
+            <div class="input-group mb-4">
+                <input id="todoContent" type="text" class="form-control" placeholder="New TODO content" aria-describedby="addTodoButton">
+                <div class="input-group-append">
+                    <button onclick="addTodo()" class="btn btn-primary" id="addTodoButton">Add TODO</button>
+                </div>
+            </div>
+            <div class="input-group mb-4">
+                <input type="text" id="searchQuery" class="form-control" placeholder="Search for TODOs..." aria-describedby="searchButton">
+                <div class="input-group-append">
+                    <button onclick="searchTodos()" class="btn btn-secondary" id="searchButton">Search</button>
+                </div>
+            </div>
+            <button onclick="fetchTodos()" class="btn btn-info mb-3">显示全部TODOs</button>
+            <button onclick="clearTodos()" class="btn btn-info mb-3">清空Todos</button>
+            <button id="undoButton" onclick="undoClearTodos()" style="display: none;">撤销</button>
+
+            <h2 class="mb-2">Your TODOs</h2>
+            <ul id="todos"></ul>
+        </div>
+    </div>
+</div>
+<script src="http://127.0.0.1:8080/static/app.js"></script>
+</body>
+</html>

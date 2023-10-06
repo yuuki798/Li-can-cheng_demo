@@ -1,8 +1,20 @@
-document.addEventListener('DOMContentLoaded', function () {
-    if (localStorage.getItem('token')) {
-        fetchTodos();
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPage = window.location.pathname;
+
+    if (currentPage !='/todos.html') {
+        // 如果用户已有token，并且他们正在访问login页面，则重定向到todos.html页面
+        if (localStorage.getItem('token')) {
+            window.location.href = 'todos.html';
+        }
+    }
+    else if (currentPage === '/todos.html') {
+        // 如果用户正在访问todos页面
+        checkTokenValidity();
     }
 });
+
+
+
 
 function login() {
     const username = document.getElementById('username').value;
@@ -18,10 +30,11 @@ function login() {
             if (data.status === 'OK') {
                 localStorage.setItem('token', data.token);
                 alert('Login successful!');
-                fetchTodos();
+                window.location.href = 'todos.html';  // 跳转到todos.html页面
             } else {
                 alert('Login failed! ' + data.error);
             }
+
         })
         .catch(error => {
             console.error('Error:', error);
@@ -54,23 +67,24 @@ function fetchTodos() {
 
                 data.forEach(todo => {
                     const li = document.createElement('li');
+                    li.className = "todo-item"; // 这将赋予每个TODO项一个样式类
 
                     // 创建一个复选框，并根据todo的完成状态设置它的状态
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.checked = todo.done;
+                    checkbox.className = "todo-checkbox"; // 添加样式类
 
                     // 在复选框状态更改的事件处理程序中
                     checkbox.onchange = function() {
                         toggleDone(todo.id, !checkbox.checked);  // 这里传递的是要变为的状态
                     };
-
-
                     li.appendChild(checkbox);
 
                     // 添加删除按钮
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
+                    deleteButton.className = "btn btn-sm btn-danger ml-2"; // 使用Bootstrap的按钮样式
                     deleteButton.onclick = function() {
                         deleteTodo(todo.id);
                     };
@@ -79,12 +93,12 @@ function fetchTodos() {
                     // 添加todo内容
                     const span = document.createElement('span');
                     span.textContent = todo.content;
+                    span.className = "todo-content ml-2"; // 添加样式类，例如边距
                     li.appendChild(span);
-
-
 
                     todosList.appendChild(li);
                 });
+
             } else {
                 console.error('Expected an array of todos, but got:', data);
             }
@@ -124,8 +138,9 @@ function register() {
 function logout() {
     localStorage.removeItem('token');
     alert('Logged out successfully!');
-    // 可以在这里添加更多的UI逻辑，如清空TODOs列表、隐藏某些按钮等
+    window.location.href = 'login.html';  // 跳转回login.html页面
 }
+
 
 function addTodo() {
     const content = document.getElementById('todoContent').value;
@@ -267,6 +282,54 @@ function toggleDone(id, currentStatus) {
             console.error('Error:', error);
         });
 }
+function checkTokenValidity() {
+    const token = localStorage.getItem('token');
+
+    // 试图获取TODOs以验证token
+    fetch('http://127.0.0.1:8080/todo', {
+        headers: {
+            'Authorization': `${token}`
+        }
+    })
+        .then(response => {
+            if (response.status === 401) {
+                alert('Session expired! Please login again.');
+                localStorage.removeItem('token'); // 清除无效的Token
+                window.location.href = 'login.html'; // 重定向到登录页面
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+let backupTodos = []; // 用于暂存清空前的todos
+
+function clearTodos() {
+    backupTodos = [...document.getElementById('todos').children]; // 备份当前的todos
+    document.getElementById('todos').innerHTML = ''; // 清空todos列表
+
+    // 显示撤销按钮
+    document.getElementById('undoButton').style.display = 'inline-block';
+
+    // 设置10秒后自动隐藏撤销按钮，并清除backupTodos
+    setTimeout(() => {
+        document.getElementById('undoButton').style.display = 'none';
+        backupTodos = [];
+    }, 10000); // 这里设置为10秒，你可以根据需求调整
+}
+
+function undoClearTodos() {
+    const todosList = document.getElementById('todos');
+    backupTodos.forEach(todo => {
+        todosList.appendChild(todo);
+    });
+
+    backupTodos = [];
+    document.getElementById('undoButton').style.display = 'none'; // 隐藏撤销按钮
+}
+
+
 
 
 // 当文档加载完成后执行getTodos函数
