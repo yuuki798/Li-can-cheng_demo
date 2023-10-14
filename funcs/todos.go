@@ -24,6 +24,8 @@ func Rooting(r *gin.RouterGroup, db *sql.DB) {
 	getAllTodo(r, db)
 	//真查询
 	searchForTodo(r, db)
+	//清空
+	clearAllTodos(r, db)
 }
 
 func getAllTodo(r *gin.RouterGroup, db *sql.DB) {
@@ -159,5 +161,17 @@ func searchForTodo(r *gin.RouterGroup, db *sql.DB) {
 		}
 
 		c.JSON(200, todos)
+	})
+}
+
+func clearAllTodos(r *gin.RouterGroup, db *sql.DB) {
+	r.DELETE("/todos", func(c *gin.Context) {
+		_, err := db.Exec("DELETE FROM todos")
+		if err != nil {
+			fmt.Println("Error:", err) // 输出具体错误到控制台
+			c.JSON(500, gin.H{"status": "InternalServerError", "error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status": "OK", "message": "All todos deleted"})
 	})
 }

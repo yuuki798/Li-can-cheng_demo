@@ -315,33 +315,30 @@ function checkTokenValidity() {
             console.error('Error:', error);
         });
 }
-
-let backupTodos = []; // 用于暂存清空前的todos
-
-function clearTodos() {
-    backupTodos = [...document.getElementById('todos').children]; // 备份当前的todos
-    document.getElementById('todos').innerHTML = ''; // 清空todos列表
-
-    // 显示撤销按钮
-    document.getElementById('undoButton').style.display = 'inline-block';
-
-    // 设置10秒后自动隐藏撤销按钮，并清除backupTodos
-    setTimeout(() => {
-        document.getElementById('undoButton').style.display = 'none';
-        backupTodos = [];
-    }, 10000); // 这里设置为10秒，你可以根据需求调整
-}
-
-function undoClearTodos() {
-    const todosList = document.getElementById('todos');
-    backupTodos.forEach(todo => {
-        todosList.appendChild(todo);
-    });
-
-    backupTodos = [];
-    document.getElementById('undoButton').style.display = 'none'; // 隐藏撤销按钮
-}
-
+document.getElementById("clearTodosBtn").addEventListener("click", function() {
+    const token = localStorage.getItem('token');
+    if (confirm("Are you sure you want to delete all todos?")) {
+        fetch('http://127.0.0.1:8080/todos', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': token   // 在请求头中添加token
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'OK') {
+                    alert(data.message);
+                    document.getElementById('todos').innerHTML = ''; // 清空前端显示的todos
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error occurred. Check console for details.');
+            });
+    }
+});
 
 
 
