@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const currentPage = window.location.pathname;
 
@@ -23,7 +25,8 @@ function login() {
     fetch('http://127.0.0.1:8080/login', {
         method: 'POST',
         body: JSON.stringify({username, password}),
-        headers: {'Content-Type': 'application/json'}
+        headers: {'Content-Type': 'application/json'},
+        
     })
         .then(response => response.json())
         .then(data => {
@@ -48,7 +51,8 @@ function fetchTodos() {
     fetch('http://127.0.0.1:8080/todo', {
         headers: {
             'Authorization': `${token}`
-        }
+        },
+        
     })
         .then(response => {
             if (response.status === 401) {
@@ -75,9 +79,13 @@ function fetchTodos() {
                     checkbox.checked = todo.done;
                     checkbox.className = "todo-checkbox"; // 添加样式类
 
+                    // // 创建切换状态按钮并添加到 li
+                    // const toggleButton = createToggleDoneButton(todo.id, todo.done);
+                    // li.appendChild(toggleButton);
+
                     // 在复选框状态更改的事件处理程序中
                     checkbox.onchange = function() {
-                        toggleDone(todo.id, !checkbox.checked);  // 这里传递的是要变为的状态
+                        toggleDone(todo.id, !this.checked);  // 使用this来引用复选框
                     };
                     li.appendChild(checkbox);
 
@@ -118,7 +126,8 @@ function register() {
     fetch('http://127.0.0.1:8080/register', {
         method: 'POST',
         body: JSON.stringify({username, password}),
-        headers: {'Content-Type': 'application/json'}
+        headers: {'Content-Type': 'application/json'},
+        
     })
         .then(response => response.json())
         .then(data => {
@@ -152,7 +161,8 @@ function addTodo() {
         headers: {
             'Authorization': `${token}`,
             'Content-Type': 'application/json'
-        }
+        },
+        
     })
         .then(response => response.json())
         .then(data => {
@@ -178,7 +188,8 @@ function deleteTodo(id) {
         method: 'DELETE',
         headers: {
             'Authorization': `${token}`
-        }
+        },
+        
     })
         .then(response => response.json())
         .then(data => {
@@ -266,7 +277,8 @@ function toggleDone(id, currentStatus) {
             'Content-Type': 'application/json',
             'Authorization': localStorage.getItem('token')
         },
-        body: JSON.stringify({ done: newStatus })
+        body: JSON.stringify({ done: newStatus }),
+        
     })
         .then(response => {
             if (!response.ok) {
@@ -286,10 +298,11 @@ function checkTokenValidity() {
     const token = localStorage.getItem('token');
 
     // 试图获取TODOs以验证token
-    fetch('http://127.0.0.1:8080/todo', {
+    fetch('todo', {
         headers: {
             'Authorization': `${token}`
-        }
+        },
+        
     })
         .then(response => {
             if (response.status === 401) {

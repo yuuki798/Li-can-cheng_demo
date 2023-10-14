@@ -1,24 +1,26 @@
 version: '3'
-
 services:
-  web:
-    build: .
+  app:  # Go 应用服务
+    build: .  # Dockerfile 所在的路径
     ports:
-      - "8080:8080"
+      - "8080:8080"  # 映射端口
     depends_on:
-      - db
-    environment:
+      - db  # 依赖于 db 服务
+    environment:  # 环境变量，用于 Go 应用连接 MySQL
       DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: 1234
 
-  db:
+  db:  # MySQL 数据库服务
     image: mysql:8.0.34
-    ports:
-      - "3307:3306"
+
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: todoDB
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: 1234  # 设置你想要的密码
+
     volumes:
+      - db_data:/var/lib/mysql  # 数据持久化
       - ./create_this.sql:/docker-entrypoint-initdb.d/create_this.sql
 
+volumes:
+  db_data:  # 数据持久化卷

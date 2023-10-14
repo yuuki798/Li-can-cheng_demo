@@ -15,18 +15,18 @@ type TODO struct {
 
 func Rooting(r *gin.RouterGroup, db *sql.DB) {
 	//添加
-	add_to_TODO(r, db)
+	addToTodo(r, db)
 	//删除
-	delete_TODO(r, db)
+	deleteTodo(r, db)
 	//修改
-	change_TODO(r, db)
+	changeTodo(r, db)
 	//获取
-	get_all_TODO(r, db)
+	getAllTodo(r, db)
 	//真查询
-	search_for_TODO(r, db)
+	searchForTodo(r, db)
 }
 
-func get_all_TODO(r *gin.RouterGroup, db *sql.DB) {
+func getAllTodo(r *gin.RouterGroup, db *sql.DB) {
 	// 获取所有TODO
 	r.GET("/todo", func(c *gin.Context) {
 		rows, err := db.Query("SELECT * FROM todos")
@@ -57,7 +57,7 @@ type UpdateTODO struct {
 	Done bool `json:"done"`
 }
 
-func change_TODO(r *gin.RouterGroup, db *sql.DB) {
+func changeTodo(r *gin.RouterGroup, db *sql.DB) {
 	// 修改TODO
 	r.PUT("/todo/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -95,7 +95,7 @@ func change_TODO(r *gin.RouterGroup, db *sql.DB) {
 	})
 }
 
-func delete_TODO(r *gin.RouterGroup, db *sql.DB) {
+func deleteTodo(r *gin.RouterGroup, db *sql.DB) {
 	// 删除TODO
 	r.DELETE("/todo/:id", func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -116,11 +116,11 @@ func delete_TODO(r *gin.RouterGroup, db *sql.DB) {
 	})
 }
 
-func add_to_TODO(r *gin.RouterGroup, db *sql.DB) {
+func addToTodo(r *gin.RouterGroup, db *sql.DB) {
 	//添加TODO
 	r.POST("/todo", func(c *gin.Context) {
 		var todo TODO
-
+		// 从请求体中解析用户数据
 		if err := c.BindJSON(&todo); err != nil {
 			fmt.Println("Error:", err) // 输出具体错误到控制台
 			c.JSON(400, gin.H{"status": "BadRequest", "error": err.Error()})
@@ -136,7 +136,7 @@ func add_to_TODO(r *gin.RouterGroup, db *sql.DB) {
 	})
 }
 
-func search_for_TODO(r *gin.RouterGroup, db *sql.DB) {
+func searchForTodo(r *gin.RouterGroup, db *sql.DB) {
 	r.GET("/todo/search/:query", func(c *gin.Context) {
 		query := c.Param("query")
 		rows, err := db.Query("SELECT * FROM todos WHERE content LIKE ?", "%"+query+"%")
